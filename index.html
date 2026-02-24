@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shivhare General Store - Cosmetic Shop</title>
+
+<style>
+body{font-family:Arial, sans-serif;margin:0;background:#fff0f6}
+header{background:#d81b60;color:#fff;padding:15px;text-align:center}
+.container{padding:15px}
+.card{background:#fff;border-radius:10px;padding:10px;margin:10px 0;box-shadow:0 2px 6px rgba(0,0,0,0.1)}
+img{max-width:100%;border-radius:8px}
+button{background:#25d366;border:none;color:#fff;padding:8px 12px;border-radius:6px;cursor:pointer;margin:3px}
+.admin-btn{background:#6a1b9a}
+.delete{background:#e53935}
+.edit{background:#fb8c00}
+input,select{width:100%;padding:8px;margin:5px 0 10px;border-radius:6px;border:1px solid #ccc}
+#adminPanel{display:none}
+.top-actions{display:flex;gap:10px;justify-content:center;margin:10px 0}
+.call{background:#0288d1}
+.filter{margin:10px 0}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>Shivhare General Store</h1>
+<p>Balaghat Main Gujri Tala, Chabi Shop ke Side Me</p>
+<p>📞 9755285135 | WhatsApp Available</p>
+</header>
+
+<div class="container">
+
+<div class="top-actions">
+<a href="tel:9755285135"><button class="call">Call Now</button></a>
+<a href="https://wa.me/919755285135"><button>WhatsApp</button></a>
+<button class="admin-btn" onclick="showLogin()">Seller Login</button>
+</div>
+
+<!-- Login -->
+<div id="loginBox" class="card" style="display:none">
+<h3>Seller Login</h3>
+<input type="password" id="adminPass" placeholder="Enter Password" />
+<button class="admin-btn" onclick="login()">Login</button>
+</div>
+
+<!-- Admin Panel -->
+<div id="adminPanel" class="card">
+<h3>Add / Manage Product</h3>
+
+<input type="text" id="pname" placeholder="Product Name" />
+<input type="number" id="pprice" placeholder="Price (₹)" />
+
+<select id="pcategory">
+<option value="Makeup">Makeup</option>
+<option value="Jewellery">Jewellery</option>
+<option value="Hair Accessories">Hair Accessories</option>
+<option value="Perfume">Perfume</option>
+<option value="Skin Care">Skin Care</option>
+<option value="Other">Other</option>
+</select>
+
+<input type="file" id="pimage" accept="image/*" />
+<button class="admin-btn" onclick="addProduct()">Upload Product</button>
+</div>
+
+<!-- Filter -->
+<div class="filter">
+<h3>Filter by Category</h3>
+<select onchange="filterCategory(this.value)">
+<option value="All">All</option>
+<option value="Makeup">Makeup</option>
+<option value="Jewellery">Jewellery</option>
+<option value="Hair Accessories">Hair Accessories</option>
+<option value="Perfume">Perfume</option>
+<option value="Skin Care">Skin Care</option>
+<option value="Other">Other</option>
+</select>
+</div>
+
+<h2>Available Products</h2>
+<div id="productList"></div>
+
+</div>
+
+<script>
+const PASS = "1234"; // Change password if needed
+let products = JSON.parse(localStorage.getItem('shivhare_products')) || [];
+let currentFilter = 'All';
+
+function showLogin(){
+ document.getElementById('loginBox').style.display='block';
+}
+
+function login(){
+ const pass = document.getElementById('adminPass').value;
+ if(pass===PASS){
+  document.getElementById('adminPanel').style.display='block';
+  alert('Login Successful');
+ }else{
+  alert('Wrong Password');
+ }
+}
+
+function addProduct(){
+ const name = document.getElementById('pname').value;
+ const price = document.getElementById('pprice').value;
+ const category = document.getElementById('pcategory').value;
+ const file = document.getElementById('pimage').files[0];
+
+ if(!name||!price||!file){alert('Fill all fields');return}
+
+ const reader = new FileReader();
+ reader.onload=function(e){
+  const img = e.target.result;
+  products.push({name,price,img,category});
+  localStorage.setItem('shivhare_products',JSON.stringify(products));
+  render();
+  document.getElementById('pname').value='';
+  document.getElementById('pprice').value='';
+  document.getElementById('pimage').value='';
+ };
+ reader.readAsDataURL(file);
+}
+
+function deleteProduct(index){
+ if(confirm('Delete this product?')){
+  products.splice(index,1);
+  localStorage.setItem('shivhare_products',JSON.stringify(products));
+  render();
+ }
+}
+
+function editProduct(index){
+ const newName = prompt('Edit product name:', products[index].name);
+ const newPrice = prompt('Edit price:', products[index].price);
+ if(newName && newPrice){
+  products[index].name = newName;
+  products[index].price = newPrice;
+  localStorage.setItem('shivhare_products',JSON.stringify(products));
+  render();
+ }
+}
+
+function filterCategory(cat){
+ currentFilter = cat;
+ render();
+}
+
+function orderWhatsApp(name){
+ const msg = encodeURIComponent('Mujhe yeh product chahiye: '+name);
+ window.open('https://wa.me/919755285135?text='+msg,'_blank');
+}
+
+function render(){
+ const list=document.getElementById('productList');
+ list.innerHTML='';
+ products.forEach((p,i)=>{
+  if(currentFilter==='All' || p.category===currentFilter){
+  list.innerHTML+=`<div class="card">
+  <img src="${p.img}" />
+  <h3>${p.name}</h3>
+  <p>Category: ${p.category}</p>
+  <p>Price: ₹${p.price}</p>
+  <button onclick="orderWhatsApp('${p.name}')">Order on WhatsApp</button>
+  <button class="edit" onclick="editProduct(${i})">Edit</button>
+  <button class="delete" onclick="deleteProduct(${i})">Delete</button>
+  </div>`;
+  }
+ });
+}
+
+render();
+</script>
+
+</body>
+</html>
