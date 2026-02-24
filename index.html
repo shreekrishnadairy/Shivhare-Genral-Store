@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shivhare General Store</title>
+
+<style>
+body{font-family:Arial;margin:0;background:#fff0f5}
+header{background:#ff1493;color:#fff;text-align:center;padding:15px}
+.container{padding:15px}
+button{padding:7px 12px;border:none;border-radius:6px;background:#ff1493;color:#fff;cursor:pointer;margin:3px}
+button:hover{background:#e01280}
+.product{background:#fff;border-radius:10px;padding:10px;margin:12px 0;box-shadow:0 0 5px rgba(0,0,0,0.15)}
+
+/* IMAGE FIXED STYLE */
+.product img{
+  width:100%;
+  height:220px;
+  object-fit:contain;
+  background:#ffffff;
+  border-radius:8px;
+}
+
+.admin-panel{display:none;border:2px dashed #ff1493;padding:10px;margin-bottom:15px;background:#fff}
+select,input{padding:6px;width:100%;margin:4px 0}
+.new{color:red;font-weight:bold}
+.filter{margin:10px 0}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>Shivhare General Store</h1>
+<p>Balaghat, Main Gujri Tala, Chabi Shop ke side me</p>
+<button onclick="openMap()">View on Map</button><br><br>
+<a href="https://wa.me/919755285135" target="_blank">
+<button>Contact on WhatsApp</button>
+</a>
+</header>
+
+<div class="container">
+
+<button onclick="adminLogin()">Seller Login</button>
+
+<div class="admin-panel" id="adminPanel">
+<h2>Add / Update Product</h2>
+<input type="hidden" id="editIndex">
+<input type="text" id="pname" placeholder="Product Name">
+<input type="number" id="pprice" placeholder="Price">
+<select id="pcategory">
+<option value="Lipstick">Lipstick</option>
+<option value="Bangles">Bangles</option>
+<option value="Bracelets">Bracelets</option>
+<option value="Perfume">Perfume</option>
+<option value="Hair Care">Hair Care</option>
+<option value="Face Care">Face Care</option>
+<option value="Jewellery">Jewellery</option>
+<option value="Clutches">Clutches</option>
+</select>
+<label><input type="checkbox" id="pnew"> Mark as New Arrival</label>
+<input type="file" id="pimage">
+<button onclick="saveProduct()">Save Product</button>
+</div>
+
+<h2>New Arrivals</h2>
+<div id="newArrivals"></div>
+
+<h2>All Products</h2>
+
+<div class="filter">
+<select onchange="filterCategory(this.value)">
+<option value="All">All Categories</option>
+<option value="Lipstick">Lipstick</option>
+<option value="Bangles">Bangles</option>
+<option value="Bracelets">Bracelets</option>
+<option value="Perfume">Perfume</option>
+<option value="Hair Care">Hair Care</option>
+<option value="Face Care">Face Care</option>
+<option value="Jewellery">Jewellery</option>
+<option value="Clutches">Clutches</option>
+</select>
+</div>
+
+<div id="productList"></div>
+
+</div>
+
+<script>
+let products = JSON.parse(localStorage.getItem("products")) || [];
+
+function adminLogin(){
+let pin=prompt("Enter Admin PIN");
+if(pin==="1234"){document.getElementById("adminPanel").style.display="block"}
+else alert("Wrong PIN");
+}
+
+function saveProduct(){
+let name=document.getElementById("pname").value;
+let price=document.getElementById("pprice").value;
+let category=document.getElementById("pcategory").value;
+let isNew=document.getElementById("pnew").checked;
+let file=document.getElementById("pimage").files[0];
+let editIndex=document.getElementById("editIndex").value;
+
+if(!name||!price){alert("Fill all fields");return;}
+
+function store(imageData){
+let product={name,price,category,isNew,image:imageData};
+if(editIndex===""){products.push(product);}
+else{products[editIndex]=product;}
+localStorage.setItem("products",JSON.stringify(products));
+resetForm();displayProducts();
+}
+
+if(file){
+let reader=new FileReader();
+reader.onload=e=>store(e.target.result);
+reader.readAsDataURL(file);
+}else{
+if(editIndex!==""){store(products[editIndex].image);}
+else alert("Select image");
+}
+}
+
+function resetForm(){
+document.getElementById("pname").value="";
+document.getElementById("pprice").value="";
+document.getElementById("pimage").value="";
+document.getElementById("pnew").checked=false;
+document.getElementById("editIndex").value="";
+}
+
+function displayProducts(filter="All"){
+let list=document.getElementById("productList");
+let newBox=document.getElementById("newArrivals");
+list.innerHTML=""; newBox.innerHTML="";
+
+products.forEach((p,i)=>{
+if(filter!=="All" && p.category!==filter) return;
+
+let msg=`Hello, mujhe ye product order karna hai: ${p.name} - ₹${p.price}`;
+let wa=`https://wa.me/919755285135?text=${encodeURIComponent(msg)}`;
+
+let card=`
+<div class="product">
+<img src="${p.image}">
+<h3>${p.name} ${p.isNew?'<span class="new">NEW</span>':''}</h3>
+<p>Price: ₹${p.price}</p>
+<p>Category: ${p.category}</p>
+<a href="${wa}" target="_blank"><button>Order on WhatsApp</button></a>
+<button onclick="editProduct(${i})">Edit</button>
+<button onclick="deleteProduct(${i})">Delete</button>
+</div>`;
+
+list.innerHTML+=card;
+if(p.isNew) newBox.innerHTML+=card;
+});
+}
+
+function editProduct(i){
+let p=products[i];
+document.getElementById("pname").value=p.name;
+document.getElementById("pprice").value=p.price;
+document.getElementById("pcategory").value=p.category;
+document.getElementById("pnew").checked=p.isNew;
+document.getElementById("editIndex").value=i;
+window.scrollTo(0,0);
+}
+
+function deleteProduct(i){
+if(confirm("Delete this product?")){
+products.splice(i,1);
+localStorage.setItem("products",JSON.stringify(products));
+displayProducts();
+}
+}
+
+function filterCategory(cat){displayProducts(cat);}
+function openMap(){window.open("https://www.google.com/maps/search/?api=1&query=Balaghat+Main+Gujri+Tala");}
+
+displayProducts();
+</script>
+
+</body>
+</html>
